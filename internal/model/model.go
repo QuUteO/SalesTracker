@@ -8,7 +8,8 @@ import (
 )
 
 var (
-	ErrItemNotFound = errors.New("item not found")
+	ErrItemNotFound     = errors.New("item not found")
+	ErrInvalidDateRange = errors.New("'from' date cannot be after 'to' date")
 )
 
 type ItemType string
