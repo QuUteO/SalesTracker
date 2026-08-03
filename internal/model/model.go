@@ -8,8 +8,7 @@ import (
 )
 
 var (
-	ErrItemNotFound  = errors.New("item not found")
-	ErrInvalidAmount = errors.New("amount must be greater than zero")
+	ErrItemNotFound = errors.New("item not found")
 )
 
 type ItemType string
