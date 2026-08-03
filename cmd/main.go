@@ -2,6 +2,8 @@ package main
 
 import (
 	"SalesTracker/internal/config"
+	"SalesTracker/internal/repository"
+	"SalesTracker/internal/service"
 	"context"
 	"fmt"
 	"os"
@@ -51,4 +53,7 @@ func main() {
 		os.Exit(1)
 	}
 	log.Info("PostgreSQL успешно подключен")
+
+	repo := repository.New(pg)
+	srv := service.New(repo)
 }
