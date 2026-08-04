@@ -1,5 +1,5 @@
 -- +goose Up
-CREATE TYPE type_sales AS ENUM('доходы', 'расходы');
+CREATE TYPE type_sales AS ENUM('income', 'expense');
 
 CREATE TABLE IF NOT EXISTS items (
     id UUID PRIMARY KEY,
