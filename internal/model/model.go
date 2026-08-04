@@ -37,7 +37,7 @@ type Item struct {
 type CreateItemRequest struct {
 	Title    string    `json:"title" binding:"required"`
 	Amount   float64   `json:"amount" binding:"required,gt=0"`
-	Type     ItemType  `json:"type" binding:"required,oneof=income expense"`
+	Type     ItemType  `json:"type"`
 	Category string    `json:"category" binding:"required"`
 	Date     time.Time `json:"date"`
 }
@@ -46,7 +46,7 @@ type CreateItemRequest struct {
 type UpdateItemRequest struct {
 	Title    string    `json:"title" binding:"required"`
 	Amount   float64   `json:"amount" binding:"required,gt=0"`
-	Type     ItemType  `json:"type" binding:"required,oneof=income expense"`
+	Type     ItemType  `json:"type"`
 	Category string    `json:"category" binding:"required"`
 	Date     time.Time `json:"date" binding:"required"`
 }
