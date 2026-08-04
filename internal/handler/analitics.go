@@ -27,7 +27,7 @@ func (h *SalesHandler) GetAnalytics(c *ginext.Context) {
 func (h *SalesHandler) ExportCSV(c *ginext.Context) {
 	var req model.AnalyticsFilter
 	if err := c.ShouldBindQuery(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, ginext.H{"error": err.Error()})
 		return
 	}
 
@@ -37,5 +37,7 @@ func (h *SalesHandler) ExportCSV(c *ginext.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, export)
+	c.Header("Content-Disposition", "attachment; filename=sales_export.csv")
+
+	c.Data(http.StatusOK, "text/csv; charset=utf-8", export)
 }
