@@ -20,7 +20,7 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
@@ -148,6 +148,44 @@
             min-width: 130px;
         }
 
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        .btn-apply {
+            background-color: var(--primary);
+            color: white;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            width: auto;
+        }
+
+        .btn-apply:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-reset {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid var(--border);
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            width: auto;
+        }
+
+        .btn-reset:hover {
+            background-color: #e2e8f0;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -227,7 +265,7 @@
             </div>
             <div class="form-group">
                 <label>Сумма</label>
-                <input type="number" step="0.01" id="amount" required placeholder="0.00">
+                <input type="number" step="0.01" min="0.01" id="amount" required placeholder="0.00">
             </div>
             <div class="form-group">
                 <label>Тип</label>
@@ -253,7 +291,7 @@
         <div class="filter-bar">
             <div class="form-group">
                 <label>Тип</label>
-                <select id="filter-type" onchange="loadData()">
+                <select id="filter-type">
                     <option value="">Все</option>
                     <option value="income">Доходы</option>
                     <option value="expense">Расходы</option>
@@ -261,19 +299,19 @@
             </div>
             <div class="form-group">
                 <label>Категория</label>
-                <input type="text" id="filter-category" placeholder="Все категории" oninput="loadData()">
+                <input type="text" id="filter-category" placeholder="Все категории">
             </div>
             <div class="form-group">
                 <label>Дата С</label>
-                <input type="date" id="filter-from" onchange="loadData()">
+                <input type="date" id="filter-from">
             </div>
             <div class="form-group">
                 <label>Дата ПО</label>
-                <input type="date" id="filter-to" onchange="loadData()">
+                <input type="date" id="filter-to">
             </div>
             <div class="form-group">
                 <label>Сортировка</label>
-                <select id="filter-sort" onchange="loadData()">
+                <select id="filter-sort">
                     <option value="date">По дате</option>
                     <option value="amount">По сумме</option>
                     <option value="title">По названию</option>
@@ -281,10 +319,15 @@
             </div>
             <div class="form-group">
                 <label>Порядок</label>
-                <select id="filter-order" onchange="loadData()">
+                <select id="filter-order">
                     <option value="desc">Убывание</option>
                     <option value="asc">Возрастание</option>
                 </select>
+            </div>
+
+            <div class="filter-actions">
+                <button type="button" class="btn-apply" onclick="loadData()">Применить</button>
+                <button type="button" class="btn-reset" onclick="resetFilters()">Сбросить</button>
             </div>
         </div>
 
@@ -363,7 +406,8 @@
                 const dateFormatted = new Date(item.date).toLocaleString('ru-RU', {
                     year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
                 });
-                const isIncome = item.type === 'income';
+
+                const isIncome = String(item.type).toLowerCase() === 'income';
                 const amountClass = isIncome ? 'amount-income' : 'amount-expense';
                 const badgeClass = isIncome ? 'badge-income' : 'badge-expense';
                 const typeText = isIncome ? 'Доход' : 'Расход';
@@ -391,14 +435,29 @@
         loadItems();
     }
 
+    function resetFilters() {
+        document.getElementById('filter-type').value = '';
+        document.getElementById('filter-category').value = '';
+        document.getElementById('filter-from').value = '';
+        document.getElementById('filter-to').value = '';
+        document.getElementById('filter-sort').value = 'date';
+        document.getElementById('filter-order').value = 'desc';
+
+        loadData();
+    }
+
     document.getElementById('create-form').addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        const rawDate = document.getElementById('date').value;
+        const dateObj = rawDate ? new Date(rawDate) : new Date();
+
         const payload = {
-            title: document.getElementById('title').value,
+            title: document.getElementById('title').value.trim(),
             amount: parseFloat(document.getElementById('amount').value),
-            type: document.getElementById('type').value,
-            category: document.getElementById('category').value,
-            date: new Date(document.getElementById('date').value).toISOString()
+            type: document.getElementById('type').value, // "income" или "expense"
+            category: document.getElementById('category').value.trim(),
+            date: dateObj.toISOString()
         };
 
         try {
@@ -414,7 +473,6 @@
                 return;
             }
 
-            // Очищаем форму и обновляем список
             document.getElementById('title').value = '';
             document.getElementById('amount').value = '';
             document.getElementById('category').value = '';
@@ -422,7 +480,7 @@
 
             loadData();
         } catch (err) {
-            alert('Не удалось отправить запрос');
+            alert('Не удалось отправить запрос: ' + err.message);
         }
     });
 
@@ -441,13 +499,36 @@
         }
     }
 
-    function exportCSV() {
+    async function exportCSV() {
         const params = getFilterQueryParams();
-        window.location.href = `/api/v1/export/csv?${params.toString()}`;
+        try {
+            const res = await fetch(`/api/v1/export/csv?${params.toString()}`);
+            let text = await res.text();
+
+            text = text.trim().replace(/^"+|"+$/g, '');
+
+            try {
+                text = decodeURIComponent(escape(atob(text)));
+            } catch (e) {
+                // Оставляем как обычный текст, если не base64
+            }
+
+            const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `sales_export_${new Date().toISOString().slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            alert('Не удалось скачать CSV: ' + err.message);
+        }
     }
 
     function escapeHtml(str) {
-        return str.replace(/[&<>"']/g, (m) => ({
+        return String(str).replace(/[&<>"']/g, (m) => ({
             '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
         })[m]);
     }
