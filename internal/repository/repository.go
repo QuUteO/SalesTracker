@@ -21,7 +21,7 @@ func New(conn *pgxdriver.Postgres) *SalesRepository {
 }
 
 func (r *SalesRepository) Create(ctx context.Context, item *model.Item) error {
-	query := `INSERT INTO items(id, title, amount, type, category, date, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7)`
+	query := `INSERT INTO items(id, title, amount, type, category, date, created_at) VALUES ($1, $2, $3, LOWER($4)::type_sales, $5, $6, $7)`
 
 	_, err := r.conn.Exec(ctx, query,
 		item.ID,
