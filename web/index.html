@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SalesTracker — Учет и Аналитика</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --primary: #4a90e2;
+            --primary-hover: #357abd;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --border: #e1e8ed;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { font-size: 1.8rem; font-weight: 700; }
+
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .card-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 850px) {
+            .layout { grid-template-columns: 1fr; }
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover { background-color: var(--primary-hover); }
+
+        .btn-export {
+            background-color: var(--success);
+            width: auto;
+            padding: 8px 16px;
+        }
+        .btn-export:hover { background-color: #27ae60; }
+
+        .btn-delete {
+            background-color: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            width: auto;
+        }
+        .btn-delete:hover { background-color: var(--danger); color: white; }
+
+        .filter-bar {
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: flex-end;
+            border: 1px solid var(--border);
+        }
+
+        .filter-bar .form-group {
+            margin-bottom: 0;
+            flex: 1;
+            min-width: 130px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-income { background: #e8f8f0; color: #2ecc71; }
+        .badge-expense { background: #fdeae8; color: #e74c3c; }
+
+        .amount-income { color: #2ecc71; font-weight: 600; }
+        .amount-expense { color: #e74c3c; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>SalesTracker</h1>
+    <button class="btn-export" onclick="exportCSV()">Скачать CSV</button>
+</header>
+
+<!-- Карточки аналитики -->
+<section class="grid-cards">
+    <div class="card">
+        <div class="card-title">Всего транзакций</div>
+        <div class="card-value" id="stat-count">0</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Общая сумма</div>
+        <div class="card-value" id="stat-sum">0.00 ₽</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Средний чек (AVG)</div>
+        <div class="card-value" id="stat-avg">0.00 ₽</div>
+    </div>
+    <div class="card">
+        <div class="card-title">Медиана</div>
+        <div class="card-value" id="stat-median">0.00 ₽</div>
+    </div>
+    <div class="card">
+        <div class="card-title">90-й перцентиль</div>
+        <div class="card-value" id="stat-p90">0.00 ₽</div>
+    </div>
+</section>
+
+<div class="layout">
+    <!-- Форма добавления -->
+    <aside class="card">
+        <h2 style="font-size: 1.1rem; margin-bottom: 16px;">Добавить запись</h2>
+        <form id="create-form">
+            <div class="form-group">
+                <label>Название</label>
+                <input type="text" id="title" required placeholder="Например, Оплата сервера">
+            </div>
+            <div class="form-group">
+                <label>Сумма</label>
+                <input type="number" step="0.01" id="amount" required placeholder="0.00">
+            </div>
+            <div class="form-group">
+                <label>Тип</label>
+                <select id="type">
+                    <option value="income">Доход</option>
+                    <option value="expense">Расход</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Категория</label>
+                <input type="text" id="category" required placeholder="Например, Инфраструктура">
+            </div>
+            <div class="form-group">
+                <label>Дата</label>
+                <input type="datetime-local" id="date" required>
+            </div>
+            <button type="submit">Сохранить</button>
+        </form>
+    </aside>
+
+    <!-- Фильтры и Таблица -->
+    <main>
+        <div class="filter-bar">
+            <div class="form-group">
+                <label>Тип</label>
+                <select id="filter-type" onchange="loadData()">
+                    <option value="">Все</option>
+                    <option value="income">Доходы</option>
+                    <option value="expense">Расходы</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Категория</label>
+                <input type="text" id="filter-category" placeholder="Все категории" oninput="loadData()">
+            </div>
+            <div class="form-group">
+                <label>Дата С</label>
+                <input type="date" id="filter-from" onchange="loadData()">
+            </div>
+            <div class="form-group">
+                <label>Дата ПО</label>
+                <input type="date" id="filter-to" onchange="loadData()">
+            </div>
+            <div class="form-group">
+                <label>Сортировка</label>
+                <select id="filter-sort" onchange="loadData()">
+                    <option value="date">По дате</option>
+                    <option value="amount">По сумме</option>
+                    <option value="title">По названию</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Порядок</label>
+                <select id="filter-order" onchange="loadData()">
+                    <option value="desc">Убывание</option>
+                    <option value="asc">Возрастание</option>
+                </select>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+            <tr>
+                <th>Дата</th>
+                <th>Название</th>
+                <th>Категория</th>
+                <th>Тип</th>
+                <th>Сумма</th>
+                <th>Действия</th>
+            </tr>
+            </thead>
+            <tbody id="items-table-body">
+            <tr><td colspan="6" style="text-align: center; color: #7f8c8d;">Загрузка данных...</td></tr>
+            </tbody>
+        </table>
+    </main>
+</div>
+
+<script>
+    // Подстановка текущей даты/времени по умолчанию в форму
+    document.getElementById('date').value = new Date().toISOString().slice(0, 16);
+
+    function getFilterQueryParams() {
+        const params = new URLSearchParams();
+        const type = document.getElementById('filter-type').value;
+        const category = document.getElementById('filter-category').value.trim();
+        const from = document.getElementById('filter-from').value;
+        const to = document.getElementById('filter-to').value;
+        const sortBy = document.getElementById('filter-sort').value;
+        const order = document.getElementById('filter-order').value;
+
+        if (type) params.append('type', type);
+        if (category) params.append('category', category);
+        if (from) params.append('from', new Date(from).toISOString());
+        if (to) params.append('to', new Date(to + 'T23:59:59').toISOString());
+        if (sortBy) params.append('sort_by', sortBy);
+        if (order) params.append('order', order);
+
+        return params;
+    }
+
+    async function loadAnalytics() {
+        const params = getFilterQueryParams();
+        try {
+            const res = await fetch(`/api/v1/analytics?${params.toString()}`);
+            if (!res.ok) return;
+            const data = await res.json();
+
+            document.getElementById('stat-count').innerText = data.count || 0;
+            document.getElementById('stat-sum').innerText = (data.sum || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2 }) + ' ₽';
+            document.getElementById('stat-avg').innerText = (data.avg || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2 }) + ' ₽';
+            document.getElementById('stat-median').innerText = (data.median || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2 }) + ' ₽';
+            document.getElementById('stat-p90').innerText = (data.percentile_90 || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2 }) + ' ₽';
+        } catch (err) {
+            console.error("Ошибка загрузки аналитики:", err);
+        }
+    }
+
+    async function loadItems() {
+        const params = getFilterQueryParams();
+        const tbody = document.getElementById('items-table-body');
+        try {
+            const res = await fetch(`/api/v1/items?${params.toString()}`);
+            if (!res.ok) throw new Error("Не удалось загрузить список");
+            const items = await res.json();
+
+            if (!items || items.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #7f8c8d;">Записи не найдены</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = items.map(item => {
+                const dateFormatted = new Date(item.date).toLocaleString('ru-RU', {
+                    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+                });
+                const isIncome = item.type === 'income';
+                const amountClass = isIncome ? 'amount-income' : 'amount-expense';
+                const badgeClass = isIncome ? 'badge-income' : 'badge-expense';
+                const typeText = isIncome ? 'Доход' : 'Расход';
+
+                return `
+                        <tr>
+                            <td>${dateFormatted}</td>
+                            <td><strong>${escapeHtml(item.title)}</strong></td>
+                            <td>${escapeHtml(item.category)}</td>
+                            <td><span class="badge ${badgeClass}">${typeText}</span></td>
+                            <td class="${amountClass}">${isIncome ? '+' : '-'}${item.amount.toLocaleString('ru-RU', { minimumFractionDigits: 2 })} ₽</td>
+                            <td>
+                                <button class="btn-delete" onclick="deleteItem('${item.id}')">Удалить</button>
+                            </td>
+                        </tr>
+                    `;
+            }).join('');
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger);">Ошибка загрузки записей</td></tr>`;
+        }
+    }
+
+    function loadData() {
+        loadAnalytics();
+        loadItems();
+    }
+
+    document.getElementById('create-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            title: document.getElementById('title').value,
+            amount: parseFloat(document.getElementById('amount').value),
+            type: document.getElementById('type').value,
+            category: document.getElementById('category').value,
+            date: new Date(document.getElementById('date').value).toISOString()
+        };
+
+        try {
+            const res = await fetch('/api/v1/items', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                alert('Ошибка при создании: ' + (errData.error || 'Неизвестная ошибка'));
+                return;
+            }
+
+            // Очищаем форму и обновляем список
+            document.getElementById('title').value = '';
+            document.getElementById('amount').value = '';
+            document.getElementById('category').value = '';
+            document.getElementById('date').value = new Date().toISOString().slice(0, 16);
+
+            loadData();
+        } catch (err) {
+            alert('Не удалось отправить запрос');
+        }
+    });
+
+    async function deleteItem(id) {
+        if (!confirm('Вы уверены, что хотите удалить эту запись?')) return;
+
+        try {
+            const res = await fetch(`/api/v1/items/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                loadData();
+            } else {
+                alert('Ошибка при удалении');
+            }
+        } catch (err) {
+            alert('Не удалось связаться с сервером');
+        }
+    }
+
+    function exportCSV() {
+        const params = getFilterQueryParams();
+        window.location.href = `/api/v1/export/csv?${params.toString()}`;
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>"']/g, (m) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+        })[m]);
+    }
+
+    // Первоначальная загрузка
+    loadData();
+</script>
+</body>
+</html>
