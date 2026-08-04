@@ -10,6 +10,9 @@ import (
 var (
 	ErrItemNotFound     = errors.New("item not found")
 	ErrInvalidDateRange = errors.New("'from' date cannot be after 'to' date")
+	ErrNegativeAmount   = errors.New("amount cannot be negative")
+	ErrEmptyTitle       = errors.New("title cannot be empty")
+	ErrInvalidType      = errors.New("type cannot be empty")
 )
 
 type ItemType string
